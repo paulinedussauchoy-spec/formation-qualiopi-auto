@@ -1,0 +1,214 @@
+{
+  "_comment": "Référentiel des 16 modules Koban — source : PRD section 7",
+  "modules": {
+    "1-01": {
+      "code": "1-01",
+      "intitule": "Socle commun - Administration socle commun",
+      "objectif_operationnel": "Être autonome dans les paramétrages quotidiens de Koban",
+      "objectifs": [
+        "Gérer les utilisateurs de la solution",
+        "Paramétrer les fonctionnalités transverses du logiciel pour assurer la bonne utilisation et compréhension du socle commun au sein de la société",
+        "Guider les utilisateurs dans la résolution de questions basiques",
+        "Guider tout nouvel utilisateur de Koban dans sa découverte de l'outil"
+      ]
+    },
+    "1-02": {
+      "code": "1-02",
+      "intitule": "Socle commun - Utilisation socle commun",
+      "objectif_operationnel": "Utiliser Koban de façon autonome en accord avec les process de l'entreprise",
+      "objectifs": [
+        "Gérer et mettre à jour les informations de ses prospects/clients et contacts",
+        "Suivre et planifier son activité commerciale",
+        "Partager les informations avec les autres utilisateurs de Koban"
+      ]
+    },
+    "1-03": {
+      "code": "1-03",
+      "intitule": "CRM - Administration CRM",
+      "objectif_operationnel": "Être autonome dans les paramétrages CRM de Koban",
+      "objectifs": [
+        "Paramétrer les processus commerciaux en adéquation avec le process commercial internet et les indicateurs souhaités",
+        "Mettre à jour le catalogue de produits vente",
+        "Personnaliser les devis",
+        "Créer et suivre les indicateurs"
+      ]
+    },
+    "1-0A": {
+      "code": "1-0A",
+      "intitule": "CRM - Utilisation CRM",
+      "objectif_operationnel": "Utiliser Koban de façon autonome en accord avec les process de l'entreprise",
+      "objectifs": [
+        "Comprendre la notion de processus commercial, de pipeline et d'opportunité",
+        "Créer et suivre ses opportunités",
+        "Faire un devis et le suivre jusqu'au résultat"
+      ]
+    },
+    "1-05": {
+      "code": "1-05",
+      "intitule": "Facturation - Administration facturation client - Niveau 1",
+      "objectif_operationnel": "Être autonome dans les paramétrages de la facturation clients (hors contrats) de Koban",
+      "objectifs": [
+        "Ajuster le catalogue produits",
+        "Réaliser et ajuster les paramétrages nécessaires au processus de facturation clients",
+        "Créer et suivre les indicateurs"
+      ]
+    },
+    "1-06": {
+      "code": "1-06",
+      "intitule": "Facturation - Utilisation facturation client - Niveau 1",
+      "objectif_operationnel": "Facturer de façon autonome et gérer les recouvrements clients",
+      "objectifs": [
+        "Gérer le processus de facturation client depuis la signature du devis",
+        "Saisir les paiements clients et suivre le recouvrement"
+      ]
+    },
+    "1-07": {
+      "code": "1-07",
+      "intitule": "Marketing - Marketing niveau 1 - Emailing",
+      "objectif_operationnel": "Être autonome dans le paramétrage et la gestion d'une campagne emailing",
+      "objectifs": [
+        "Créer ses modèles emails",
+        "Assurer l'ensemble des paramétrages emailings préalables",
+        "Créer, envoyer et analyser ses campagnes emailings"
+      ]
+    },
+    "1-09": {
+      "code": "1-09",
+      "intitule": "Service client SAV - Administration service client SAV",
+      "objectif_operationnel": "Être autonome dans le paramétrage du service clients : gestion et personnalisation des tickets",
+      "objectifs": [
+        "Comprendre et transmettre la manière de gérer un ticket",
+        "Personnaliser le processus de gestion de tickets et les informations constituant un ticket"
+      ]
+    },
+    "1-10": {
+      "code": "1-10",
+      "intitule": "Service client SAV - Utilisation service client SAV",
+      "objectif_operationnel": "Créer et suivre de façon autonome les demandes clients par le biais des tickets du module",
+      "objectifs": [
+        "Créer un ticket et remplir les informations demandées en fonction de l'étape et du process défini en interne",
+        "Utiliser les fonctionnalités disponibles pour échanger et partager l'information",
+        "Suivre le ticket et clôturer le ticket"
+      ]
+    },
+    "2-05": {
+      "code": "2-05",
+      "intitule": "Facturation - Administration facturation client - Niveau 2 - Contrats",
+      "objectif_operationnel": "Être autonome pour paramétrer le module Contrats et les automatismes liés",
+      "objectifs": [
+        "Ajuster le catalogue produits en fonction des modalités de ses contrats",
+        "Paramétrer les automatismes du renouvellement",
+        "Paramétrer la facturation automatique"
+      ]
+    },
+    "2-06": {
+      "code": "2-06",
+      "intitule": "Facturation - Utilisation facturation client - Niveau 2 - Contrats",
+      "objectif_operationnel": "Gérer les contrats client et assurer renouvellement et facturation",
+      "objectifs": [
+        "Créer un contrat complet depuis une commande client ou en direct",
+        "Comprendre, compléter et ajuster le détail du contrat",
+        "Gérer le renouvellement",
+        "Gérer la facturation"
+      ]
+    },
+    "2-07": {
+      "code": "2-07",
+      "intitule": "Marketing - Marketing niveau 2 - Tracking et points engagements",
+      "objectif_operationnel": "Être autonome pour tracker et engager depuis son site web",
+      "objectifs": [
+        "Tracker les pages à valeur de son site",
+        "Créer et intégrer un point d'engagement standard sur son site",
+        "Paramétrer les points d'engagement en vue de suivre les leads générés"
+      ]
+    },
+    "2-08": {
+      "code": "2-08",
+      "intitule": "Marketing - Marketing niveau 2 - Scenarii marketing",
+      "objectif_operationnel": "Être autonome pour créer et lancer des scenarii de marketing automation",
+      "objectifs": [
+        "Créer un scénario en maîtrisant les types d'étapes et les bonnes pratiques",
+        "Lancer un scénario depuis un contact ou une requête",
+        "Analyser le scénario en cours"
+      ]
+    },
+    "2-09": {
+      "code": "2-09",
+      "intitule": "Gestion - Gestion niveau 3 - Achats - Paramétrage et utilisation",
+      "objectif_operationnel": "Être autonome pour créer fournisseurs et produits achats liés, créer une commande fournisseur, lier une facture fournisseur, générer un bon de réception",
+      "objectifs": [
+        "Créer un statut fournisseur",
+        "Créer un produit achat et le lier à n fournisseurs",
+        "Générer une commande fournisseur, la valider, la réceptionner via un bon de réception",
+        "Solder la commande fournisseur en enregistrant la facture du fournisseur",
+        "Enregistrer le règlement d'une facture fournisseur"
+      ]
+    },
+    "2-10": {
+      "code": "2-10",
+      "intitule": "Gestion - Gestion niveau 3 - Stocks - Paramétrage et utilisation",
+      "objectif_operationnel": "Être autonome pour gérer les stocks : entrées et sorties, inventaires",
+      "objectifs": [
+        "Créer ses dépôts",
+        "Paramétrer les produits devant être gérés en stocks",
+        "Créer une entrée en stocks",
+        "Créer une sortie de stocks",
+        "Générer un inventaire"
+      ]
+    },
+    "2-11": {
+      "code": "2-11",
+      "intitule": "Gestion - Gestion niveau 3 - Projets - Paramétrage et utilisation",
+      "objectif_operationnel": "Être autonome pour paramétrer les types de projets, créer et planifier les actions d'un projet, gérer le temps passé, enregistrer les commandes fournisseurs liées pour suivre la rentabilité",
+      "objectifs": [
+        "Créer des types de projets et leurs étapes personnalisées",
+        "Créer un projet et planifier les actions de chaque étape",
+        "Pointer le temps passé sur une action"
+      ]
+    }
+  },
+
+  "_comment_mapping": "Table de correspondance Excel → code module (PRD section 6)",
+  "mapping": [
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["Socle commun"],
+      "code": "1-01"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["CRM"],
+      "code": "1-03"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["SAV", "SAV +++"],
+      "code": "1-09"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["Facturation clients / CONTRATS", "Facturation clients", "Facturation"],
+      "code": "1-05"
+    },
+    {
+      "type_groupe": "Utilisateurs",
+      "domaines": ["Socle commun"],
+      "code": "1-02"
+    },
+    {
+      "type_groupe": "Utilisateurs",
+      "domaines": ["CRM"],
+      "code": "1-0A"
+    },
+    {
+      "type_groupe": "Utilisateurs",
+      "domaines": ["SAV", "SAV +++"],
+      "code": "1-10"
+    },
+    {
+      "type_groupe": "Utilisateurs",
+      "domaines": ["Facturation clients / CONTRATS", "Facturation clients", "Facturation"],
+      "code": "2-06"
+    }
+  ]
+}

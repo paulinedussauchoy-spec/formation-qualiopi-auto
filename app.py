@@ -228,6 +228,30 @@ def _render_group(i: int, group: ConventionGroup) -> None:
                 for s in group.candidats_a_inviter:
                     st.markdown(f"- {s.nom} {s.prenom}")
 
+        # ── Dates des sessions (feuilles de présence) ────────────────────────
+        st.markdown("---")
+        st.write("**Dates des sessions (feuilles de présence) :**")
+        n_dj = len(group.module_columns)
+        dj_cols = st.columns(min(n_dj, 4))
+        for j, mc in enumerate(group.module_columns):
+            dj_label = f"DJ{j + 1:02d}"
+            if mc.domaine:
+                dj_label += f" — {mc.domaine}"
+            # Valeur par défaut : date issue de l'Excel si disponible
+            default_date = None
+            if mc.date:
+                try:
+                    from datetime import datetime as _dt
+                    default_date = _dt.strptime(mc.date, "%d/%m/%Y").date()
+                except Exception:
+                    pass
+            dj_cols[j % 4].date_input(
+                dj_label,
+                value=default_date,
+                format="DD/MM/YYYY",
+                key=_wkey("date_dj", i, j),
+            )
+
 
 # ---------------------------------------------------------------------------
 # Génération — Phase A : Conventions
@@ -276,6 +300,27 @@ def _do_generate_conventions(
 # Génération — Phase B : Certificats + Feuilles de présence
 # ---------------------------------------------------------------------------
 
+def _apply_dj_dates(
+    groups: list[ConventionGroup],
+    group_offset: int = 0,
+) -> list[ConventionGroup]:
+    """
+    Retourne des copies des groupes avec mc.date mis à jour
+    depuis les champs de date saisis dans l'UI (session_state).
+    """
+    from datetime import date as _date_t
+    result = []
+    for i, group in enumerate(groups):
+        g = deepcopy(group)
+        for j, mc in enumerate(g.module_columns):
+            key = _wkey("date_dj", i + group_offset, j)
+            val = st.session_state.get(key)
+            if isinstance(val, _date_t):
+                mc.date = val.strftime("%d/%m/%Y")
+        result.append(g)
+    return result
+
+
 def _do_generate_post(
     groups: list[ConventionGroup],
     client: ClientInfo,
@@ -292,10 +337,17 @@ def _do_generate_post(
         st.error(str(e))
         return
 
+    # Appliquer les dates DJ saisies dans l'UI
+    groups_with_dates = _apply_dj_dates(groups)
+
     with st.spinner("Génération des certificats et feuilles de présence..."):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 out = Path(tmp)
+                certif_out   = out / "certificats"
+                presence_out = out / "feuilles_presence"
+                certif_out.mkdir(parents=True, exist_ok=True)
+                presence_out.mkdir(parents=True, exist_ok=True)
 
                 certif_paths = certif_r.generate_all(
                     groups=groups,
@@ -303,15 +355,15 @@ def _do_generate_post(
                     dates_previsionnelles=dates_prev,
                     date_document=date_doc,
                     ref_dossier=ref,
-                    output_dir=out / "certificats",
+                    output_dir=certif_out,
                 )
                 presence_paths = presence_r.generate_all(
-                    groups=groups,
+                    groups=groups_with_dates,
                     client=client,
                     dates_previsionnelles=dates_prev,
                     date_document=date_doc,
                     ref_dossier=ref,
-                    output_dir=out / "feuilles_presence",
+                    output_dir=presence_out,
                 )
                 zip_bytes = _build_zip(
                     {
@@ -325,8 +377,9 @@ def _do_generate_post(
             st.session_state["certif_count"]    = len(certif_paths)
             st.session_state["presence_count"]  = len(presence_paths)
             st.success(
-                f"{len(certif_paths)} certificat(s) + "
-                f"{len(presence_paths)} feuille(s) de présence générés."
+                f"✅ {len(certif_paths)} certificat(s) + "
+                f"{len(presence_paths)} feuille(s) de présence générés. "
+                f"Cliquez sur **Télécharger** ci-dessous."
             )
 
         except Exception as exc:
@@ -413,20 +466,41 @@ def main() -> None:
     # ── Étape 2 — Informations client ───────────────────────────────────────
     st.header("2. Informations client")
 
+    # Pré-remplir depuis les valeurs déjà saisies (si formulaire déjà validé)
+    _saved = st.session_state.get("client")
+    _default_ref = (
+        st.session_state.get("ref")
+        or f"{date_cls.today().year}-{excel_data.client_name}"
+    )
+
     with st.form("client_form"):
         col1, col2 = st.columns(2)
         with col1:
-            nom           = st.text_input("Nom de la société *",    value=excel_data.client_name)
-            representant  = st.text_input("Représentant légal *",   placeholder="Gilles BERTRAND")
-            fonction      = st.text_input("Fonction *",             placeholder="Dirigeant")
+            nom          = st.text_input(
+                "Nom de la société *",
+                value=_saved.nom if _saved else (excel_data.client_name or ""),
+            )
+            representant = st.text_input(
+                "Représentant légal *",
+                value=_saved.representant if _saved else "",
+                placeholder="Gilles BERTRAND",
+            )
+            fonction     = st.text_input(
+                "Fonction *",
+                value=_saved.fonction if _saved else "",
+                placeholder="Dirigeant",
+            )
         with col2:
             adresse = st.text_area(
                 "Adresse complète *", height=100,
+                value=_saved.adresse if _saved else "",
                 placeholder="PARC D'ACTIVITES DES ECLAPONS\n3 CHEMIN DES ECLAPONS\n69390 VOURLES",
             )
             frais = st.number_input(
                 "Frais de mission HT (€)",
-                min_value=0.0, value=0.0, step=50.0, format="%.2f",
+                min_value=0.0,
+                value=_saved.frais_mission_ht if _saved else 0.0,
+                step=50.0, format="%.2f",
             )
 
         st.divider()
@@ -434,14 +508,19 @@ def main() -> None:
         with col3:
             dates_prev = st.text_input(
                 "Dates prévisionnelles *",
+                value=st.session_state.get("dates_prev", ""),
                 placeholder="Du 01/04/2026 au 31/10/2026",
             )
         with col4:
             date_doc = st.text_input(
                 "Date du document",
-                value=date_cls.today().strftime("%d/%m/%Y"),
+                value=st.session_state.get("date_doc", date_cls.today().strftime("%d/%m/%Y")),
             )
-        ref = st.text_input("Référence dossier", placeholder="2026-GENERFEU")
+        ref = st.text_input(
+            "Référence dossier",
+            value=_default_ref,
+            placeholder="2026-GENERFEU",
+        )
 
         submitted = st.form_submit_button("Valider", type="primary", use_container_width=True)
 
@@ -550,11 +629,16 @@ def main() -> None:
         fmt  = "(+ PDF)" if soffice else "(.docx uniquement)"
         name = f"post_formation_{_slug(client.nom)}_{date_doc.replace('/', '-')}.zip"
         st.download_button(
-            label=f"Télécharger — {n_c} certificat(s) + {n_f} feuille(s) {fmt}",
+            label=f"⬇️  Télécharger le ZIP — {n_c} certificat(s) + {n_f} feuille(s) {fmt}",
             data=st.session_state["post_zip"],
             file_name=name,
             mime="application/zip",
             use_container_width=True,
+            type="primary",
+        )
+        st.caption(
+            f"Le ZIP contient deux dossiers : **certificats/** ({n_c} fichiers) "
+            f"et **feuilles_presence/** ({n_f} fichiers)."
         )
 
 

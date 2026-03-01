@@ -1,13 +1,17 @@
 """
-document_gen.py — Génération des conventions de formation (.docx)
+document_gen.py — Génération des conventions et certificats de formation (.docx)
 
-Utilise docxtpl (moteur Jinja2 dans Word) pour remplir templates/convention.docx
-avec les données issues du group_builder.
+Utilise docxtpl (moteur Jinja2 dans Word) pour remplir :
+  - templates/convention.docx  → ConventionRenderer
+  - templates/certificat.docx  → CertificatRenderer
 
 Usage :
-    from core.document_gen import ConventionRenderer, ClientInfo
+    from core.document_gen import ConventionRenderer, CertificatRenderer, ClientInfo
     renderer = ConventionRenderer()
-    paths = renderer.generate_all_conventions(groups, client, dates="Du 01/04/2026 au 31/10/2026")
+    paths = renderer.generate_all(groups, client, dates="Du 01/04/2026 au 31/10/2026")
+
+    certif = CertificatRenderer()
+    paths = certif.generate_all(groups, client, dates="Du 01/04/2026 au 31/10/2026")
 """
 
 from __future__ import annotations
@@ -31,6 +35,7 @@ ROOT = Path(__file__).parent.parent
 TEMPLATES_DIR = ROOT / "templates"
 CONFIG_DIR = ROOT / "config"
 DEFAULT_OUTPUT_DIR = ROOT / "output" / "conventions"
+DEFAULT_CERTIF_DIR = ROOT / "output" / "certificats"
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +82,13 @@ def _modalite_display(modalite: str) -> str:
         "VISIO": "À distance",
         "SUR SITE": "Sur site",
     }.get(modalite.upper().strip(), modalite)
+
+
+def _nb_heures_str(nb_heures: float) -> str:
+    """Formate le nombre d'heures pour le certificat. Ex: 14.0 → '14 heures'"""
+    if nb_heures == int(nb_heures):
+        return f"{int(nb_heures)} heures"
+    return f"{str(nb_heures).replace('.', ',')} heures"
 
 
 def _duree_detail(nb_journees: float, nb_heures: float) -> str:
@@ -269,4 +281,159 @@ class ConventionRenderer:
                 template_path=self.template_path,
             )
             paths.append(path)
+        return paths
+
+
+# ---------------------------------------------------------------------------
+# Rendu d'un certificat individuel
+# ---------------------------------------------------------------------------
+
+def generate_certificat(
+    group: ConventionGroup,
+    stagiaire,
+    client: ClientInfo,
+    dates_previsionnelles: str,
+    date_document: Optional[str] = None,
+    ref_dossier: str = "",
+    output_dir: Path = DEFAULT_CERTIF_DIR,
+    template_path: Optional[Path] = None,
+) -> Path:
+    """
+    Génère le certificat de réalisation (.docx) d'un stagiaire.
+
+    Args:
+        group:                 ConventionGroup du stagiaire
+        stagiaire:             Objet Stagiaire (nom, prenom)
+        client:                Infos variables du client
+        dates_previsionnelles: Ex. "Du 01/04/2026 au 31/10/2026"
+        date_document:         Date du document (défaut : aujourd'hui)
+        ref_dossier:           Numéro/référence du dossier (optionnel)
+        output_dir:            Dossier de sortie
+        template_path:         Chemin du template (défaut : templates/certificat.docx)
+
+    Returns:
+        Path du fichier .docx généré
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if template_path is None:
+        template_path = TEMPLATES_DIR / "certificat.docx"
+
+    if date_document is None:
+        date_document = date.today().strftime("%d/%m/%Y")
+
+    # -----------------------------------------------------------------------
+    # Contexte Jinja2 pour docxtpl
+    # -----------------------------------------------------------------------
+    nb_journees = group.nb_journees
+    context = {
+        # --- Stagiaire ---
+        "stagiaire_nom": stagiaire.nom,
+        "stagiaire_prenom": stagiaire.prenom,
+
+        # --- Client ---
+        "client_nom": client.nom,
+        "client_adresse": client.adresse,
+
+        # --- Modules ---
+        "modules": [
+            {
+                "code": m.code,
+                "intitule": m.intitule,
+            }
+            for m in group.modules
+        ],
+
+        # --- Statistiques ---
+        "nb_journees_str": (
+            str(int(nb_journees))
+            if nb_journees == int(nb_journees)
+            else str(nb_journees).replace(".", ",")
+        ),
+        "nb_heures_str": _nb_heures_str(group.nb_heures_par_stagiaire),
+        "modalite": _modalite_display(group.modalite),
+        "dates_previsionnelles": dates_previsionnelles,
+
+        # --- Document ---
+        "date_document": date_document,
+        "ref_dossier": ref_dossier,
+    }
+
+    # -----------------------------------------------------------------------
+    # Rendu docxtpl
+    # -----------------------------------------------------------------------
+    tpl = DocxTemplate(template_path)
+    tpl.render(context)
+
+    # -----------------------------------------------------------------------
+    # Nom du fichier de sortie
+    # -----------------------------------------------------------------------
+    client_slug = _slug(client.nom)
+    nom_slug = _slug(stagiaire.nom)
+    prenom_slug = _slug(stagiaire.prenom)
+    group_slug = _slug(group.label)
+    filename = f"CERTIF_{client_slug}_{nom_slug}_{prenom_slug}_{group_slug}.docx"
+    output_path = output_dir / filename
+    tpl.save(output_path)
+
+    return output_path
+
+
+# ---------------------------------------------------------------------------
+# Renderer : génère un lot de certificats
+# ---------------------------------------------------------------------------
+
+class CertificatRenderer:
+    """
+    Gère la génération en lot des certificats individuels pour un client.
+
+    Génère 1 certificat par stagiaire (tous les stagiaires de tous les groupes,
+    y compris les TNS qui participent aux formations).
+
+    Usage :
+        renderer = CertificatRenderer()
+        paths = renderer.generate_all(groups, client, dates, output_dir)
+    """
+
+    def __init__(self, template_path: Optional[Path] = None):
+        self.template_path = template_path or (TEMPLATES_DIR / "certificat.docx")
+        if not self.template_path.exists():
+            raise FileNotFoundError(
+                f"Template introuvable : {self.template_path}\n"
+                "Lancez d'abord : python scripts/build_certif_template.py"
+            )
+
+    def generate_all(
+        self,
+        groups: list[ConventionGroup],
+        client: ClientInfo,
+        dates_previsionnelles: str,
+        date_document: Optional[str] = None,
+        ref_dossier: str = "",
+        output_dir: Path = DEFAULT_CERTIF_DIR,
+    ) -> list[Path]:
+        """
+        Génère les certificats pour tous les stagiaires de tous les groupes.
+
+        Inclut les stagiaires TNS (qui participent aux formations même s'ils
+        n'apparaissent pas dans la convention).
+
+        Returns:
+            Liste des chemins vers les fichiers générés.
+        """
+        paths = []
+        for group in groups:
+            for stagiaire in group.all_stagiaires:
+                path = generate_certificat(
+                    group=group,
+                    stagiaire=stagiaire,
+                    client=client,
+                    dates_previsionnelles=dates_previsionnelles,
+                    date_document=date_document,
+                    ref_dossier=ref_dossier,
+                    output_dir=output_dir,
+                    template_path=self.template_path,
+                )
+                paths.append(path)
         return paths

@@ -11,8 +11,9 @@ Clé de groupement :
   reste dans Gr01 {9,10,11,12}, pas dans SAV Gr03.
 
 Calcul des demi-journées :
-  = nombre de codes modules UNIQUES (déduplication).
-  Exemple Gr01 : 4 colonnes (9,10,11,12) → codes {1-02, 1-0A} → 2 demi-journées.
+  = nombre de colonnes Excel (demi-journées de formation réelles).
+  Exemple Gr01 : 4 colonnes (9,10,11,12) → 4 demi-journées → 2 journées / 14h.
+  Un même code module peut apparaître sur plusieurs colonnes (ex: 1-02 × 2 = 2 DJ).
   ARCHITECTURE.md précise qu'Estelle peut modifier ce chiffre dans l'interface.
 
 Cas particuliers gérés :
@@ -243,8 +244,8 @@ def build_convention_groups(
         # Modalité (doit être cohérente dans le groupe — on prend la première)
         modalite = module_cols[0].modalite if module_cols else ""
 
-        # nb_demi_journees = nb codes modules uniques (default, modifiable par Estelle)
-        nb_demi_journees = len(unique_modules)
+        # nb_demi_journees = nb colonnes Excel = nb demi-journées réelles (modifiable par Estelle)
+        nb_demi_journees = len(module_cols)
 
         # Label suggéré
         label = _suggest_label(module_cols, unique_modules)

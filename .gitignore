@@ -1,7 +1,10 @@
-# Secrets
+# Secrets — exclure les vrais fichiers de config
 .env
-.env.*
-*.env
+.env.local
+.env.*.local
+
+# Inclure explicitement le fichier exemple (pas un secret)
+!.env.example
 
 # Python
 __pycache__/

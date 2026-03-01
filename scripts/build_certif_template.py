@@ -133,7 +133,9 @@ def build_certif_template():
     _set_cell(t3.rows[1].cells[1], "{{ nb_heures_str }}")
     _set_cell(t3.rows[2].cells[1], "{{ modalite }}")
     # Ligne 3 "Formation de type collectif" — laisser tel quel
-    _set_cell(t3.rows[4].cells[1], "{{ dates_previsionnelles }}")
+    # Ligne 4 : label → "Dates de réalisation", valeur → dates effectives
+    _set_cell(t3.rows[4].cells[0], "Dates de r\u00e9alisation")
+    _set_cell(t3.rows[4].cells[1], "{{ dates_realisees }}")
 
     # ------------------------------------------------------------------
     # PARAGRAPHES

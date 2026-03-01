@@ -156,6 +156,40 @@ def test_certif_bertrand_tns_present():
     print(f"  BERTRAND TNS : certificat présent → {bertrand_paths[0].name}")
 
 
+def test_dates_realisees_injectees():
+    """Les dates réelles passées via dates_realisees_per_group s'affichent sur le certificat."""
+    from docx import Document
+
+    groups, renderer = _load()
+
+    # Simuler les dates réelles pour les Admins (groupe 0)
+    dates_admins = "01/04/2026, 08/04/2026, 15/04/2026, 22/04/2026"
+    dates_per_group = [dates_admins] + [None] * (len(groups) - 1)
+
+    paths = renderer.generate_all(
+        groups=groups,
+        client=GENERFEU,
+        dates_previsionnelles=DATES,
+        date_document=DATE_DOC,
+        ref_dossier="2026-GENERFEU",
+        output_dir=OUTPUT_DIR,
+        dates_realisees_per_group=dates_per_group,
+    )
+
+    certif = OUTPUT_DIR / "CERTIF_GENERFEU_DUPONT_Christelle_Administrateurs.docx"
+    assert certif.exists()
+    doc = Document(certif)
+    full_text = " ".join(
+        cell.text for table in doc.tables
+        for row in table.rows for cell in row.cells
+    )
+    assert "01/04/2026, 08/04/2026" in full_text, (
+        f"Dates réalisées non trouvées dans le certificat. Contenu : {full_text[:300]}"
+    )
+    assert "Dates de r\u00e9alisation" in full_text, "Label 'Dates de réalisation' manquant"
+    print(f"  Dates réalisées injectées : {dates_admins} — OK")
+
+
 def test_certif_techniciens_17():
     """17 certificats pour le groupe Techniciens."""
     groups, renderer = _load()
@@ -181,6 +215,7 @@ def run_all():
         test_noms_fichiers_certif,
         test_pas_de_tags_residuels_certif,
         test_contenu_certif_dupont,
+        test_dates_realisees_injectees,
         test_certif_bertrand_tns_present,
         test_certif_techniciens_17,
     ]

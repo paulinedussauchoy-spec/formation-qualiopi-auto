@@ -301,6 +301,7 @@ def generate_certificat(
     dates_previsionnelles: str,
     date_document: Optional[str] = None,
     ref_dossier: str = "",
+    dates_realisees: Optional[str] = None,
     output_dir: Path = DEFAULT_CERTIF_DIR,
     template_path: Optional[Path] = None,
 ) -> Path:
@@ -360,6 +361,9 @@ def generate_certificat(
         "nb_heures_str": _nb_heures_str(group.nb_heures_par_stagiaire),
         "modalite": _modalite_display(group.modalite),
         "dates_previsionnelles": dates_previsionnelles,
+        # dates_realisees = dates effectives saisies dans l'UI,
+        # ou fallback sur la plage prévisionnelle
+        "dates_realisees": dates_realisees if dates_realisees else dates_previsionnelles,
 
         # --- Document ---
         "date_document": date_document,
@@ -418,6 +422,7 @@ class CertificatRenderer:
         date_document: Optional[str] = None,
         ref_dossier: str = "",
         output_dir: Path = DEFAULT_CERTIF_DIR,
+        dates_realisees_per_group: Optional[list[Optional[str]]] = None,
     ) -> list[Path]:
         """
         Génère les certificats pour tous les stagiaires de tous les groupes.
@@ -425,11 +430,21 @@ class CertificatRenderer:
         Inclut les stagiaires TNS (qui participent aux formations même s'ils
         n'apparaissent pas dans la convention).
 
+        Args:
+            dates_realisees_per_group: liste de N strings (une par groupe) contenant
+                les dates effectives de session, ex. "01/04/2026, 08/04/2026".
+                None pour un groupe = fallback sur dates_previsionnelles.
+
         Returns:
             Liste des chemins vers les fichiers générés.
         """
         paths = []
-        for group in groups:
+        for i, group in enumerate(groups):
+            dates_realisees = (
+                dates_realisees_per_group[i]
+                if dates_realisees_per_group and i < len(dates_realisees_per_group)
+                else None
+            )
             for stagiaire in group.all_stagiaires:
                 path = generate_certificat(
                     group=group,
@@ -438,6 +453,7 @@ class CertificatRenderer:
                     dates_previsionnelles=dates_previsionnelles,
                     date_document=date_document,
                     ref_dossier=ref_dossier,
+                    dates_realisees=dates_realisees,
                     output_dir=output_dir,
                     template_path=self.template_path,
                 )

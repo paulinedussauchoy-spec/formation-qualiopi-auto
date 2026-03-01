@@ -321,6 +321,30 @@ def _apply_dj_dates(
     return result
 
 
+def _get_dates_realisees(groups: list[ConventionGroup]) -> list[Optional[str]]:
+    """
+    Construit la liste des dates effectives de session par groupe,
+    triées chronologiquement et formatées pour le certificat de réalisation.
+    Ex: ["01/04/2026, 08/04/2026, 15/04/2026", None, "15/05/2026, 22/05/2026", ...]
+
+    None si aucune date n'a été saisie pour ce groupe (fallback sur dates_previsionnelles).
+    """
+    from datetime import date as _date_t, datetime as _dt
+    result = []
+    for i, group in enumerate(groups):
+        dates = []
+        for j in range(len(group.module_columns)):
+            val = st.session_state.get(_wkey("date_dj", i, j))
+            if isinstance(val, _date_t):
+                dates.append(val)
+        if dates:
+            dates_sorted = sorted(set(dates))
+            result.append(", ".join(d.strftime("%d/%m/%Y") for d in dates_sorted))
+        else:
+            result.append(None)
+    return result
+
+
 def _do_generate_post(
     groups: list[ConventionGroup],
     client: ClientInfo,
@@ -337,8 +361,9 @@ def _do_generate_post(
         st.error(str(e))
         return
 
-    # Appliquer les dates DJ saisies dans l'UI
-    groups_with_dates = _apply_dj_dates(groups)
+    # Dates effectives de session (saisies dans l'UI) — pour certificats et présences
+    groups_with_dates     = _apply_dj_dates(groups)
+    dates_realisees_list  = _get_dates_realisees(groups)
 
     with st.spinner("Génération des certificats et feuilles de présence..."):
         try:
@@ -356,6 +381,7 @@ def _do_generate_post(
                     date_document=date_doc,
                     ref_dossier=ref,
                     output_dir=certif_out,
+                    dates_realisees_per_group=dates_realisees_list,
                 )
                 presence_paths = presence_r.generate_all(
                     groups=groups_with_dates,

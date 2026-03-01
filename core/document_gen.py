@@ -1,17 +1,21 @@
 """
-document_gen.py — Génération des conventions et certificats de formation (.docx)
+document_gen.py — Génération des conventions, certificats et feuilles de présence (.docx)
 
 Utilise docxtpl (moteur Jinja2 dans Word) pour remplir :
-  - templates/convention.docx  → ConventionRenderer
-  - templates/certificat.docx  → CertificatRenderer
+  - templates/convention.docx      → ConventionRenderer
+  - templates/certificat.docx      → CertificatRenderer
+  - templates/feuille_presence.docx → FeuillePresenceRenderer
 
 Usage :
-    from core.document_gen import ConventionRenderer, CertificatRenderer, ClientInfo
+    from core.document_gen import ConventionRenderer, CertificatRenderer, FeuillePresenceRenderer, ClientInfo
     renderer = ConventionRenderer()
     paths = renderer.generate_all(groups, client, dates="Du 01/04/2026 au 31/10/2026")
 
     certif = CertificatRenderer()
     paths = certif.generate_all(groups, client, dates="Du 01/04/2026 au 31/10/2026")
+
+    presence = FeuillePresenceRenderer()
+    paths = presence.generate_all(groups, client, dates="Du 01/04/2026 au 31/10/2026")
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ from typing import Optional
 from docxtpl import DocxTemplate
 
 from core.group_builder import ConventionGroup
+from core.module_mapper import get_mapper
 
 # ---------------------------------------------------------------------------
 # Chemins
@@ -35,7 +40,8 @@ ROOT = Path(__file__).parent.parent
 TEMPLATES_DIR = ROOT / "templates"
 CONFIG_DIR = ROOT / "config"
 DEFAULT_OUTPUT_DIR = ROOT / "output" / "conventions"
-DEFAULT_CERTIF_DIR = ROOT / "output" / "certificats"
+DEFAULT_CERTIF_DIR   = ROOT / "output" / "certificats"
+DEFAULT_PRESENCE_DIR = ROOT / "output" / "feuilles_presence"
 
 
 # ---------------------------------------------------------------------------
@@ -428,6 +434,176 @@ class CertificatRenderer:
                 path = generate_certificat(
                     group=group,
                     stagiaire=stagiaire,
+                    client=client,
+                    dates_previsionnelles=dates_previsionnelles,
+                    date_document=date_document,
+                    ref_dossier=ref_dossier,
+                    output_dir=output_dir,
+                    template_path=self.template_path,
+                )
+                paths.append(path)
+        return paths
+
+
+# ---------------------------------------------------------------------------
+# Rendu d'une feuille de présence (1 par demi-journée)
+# ---------------------------------------------------------------------------
+
+def generate_feuille_presence(
+    group: ConventionGroup,
+    num_dj: int,
+    client: ClientInfo,
+    dates_previsionnelles: str,
+    date_document: Optional[str] = None,
+    ref_dossier: str = "",
+    output_dir: Path = DEFAULT_PRESENCE_DIR,
+    template_path: Optional[Path] = None,
+) -> Path:
+    """
+    Génère la feuille de présence pour une demi-journée spécifique.
+
+    Args:
+        group:                 ConventionGroup du groupe de stagiaires
+        num_dj:                Numéro de la demi-journée (1-based, index dans module_columns)
+        client:                Infos variables du client
+        dates_previsionnelles: Plage de dates du groupe (ex. "Du 01/04/2026 au 31/10/2026")
+        date_document:         Date du document (défaut : aujourd'hui)
+        ref_dossier:           Référence du dossier (optionnel)
+        output_dir:            Dossier de sortie
+        template_path:         Chemin du template (défaut : templates/feuille_presence.docx)
+
+    Returns:
+        Path du fichier .docx généré
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if template_path is None:
+        template_path = TEMPLATES_DIR / "feuille_presence.docx"
+
+    if date_document is None:
+        date_document = date.today().strftime("%d/%m/%Y")
+
+    # -----------------------------------------------------------------------
+    # Module spécifique à cette demi-journée
+    # -----------------------------------------------------------------------
+    mc = group.module_columns[num_dj - 1]  # 0-based
+    mapper = get_mapper()
+    module = mapper.resolve(mc.type_groupe, mc.domaine)
+
+    module_code    = module.code if module else ""
+    module_intitule = module.intitule if module else mc.domaine
+
+    # -----------------------------------------------------------------------
+    # Date / horaires de la session
+    # -----------------------------------------------------------------------
+    date_session = mc.date or "À définir"
+    if mc.date and mc.horaires:
+        dates_session_detail = f"{mc.date} {mc.horaires}".strip()
+    elif mc.date:
+        dates_session_detail = mc.date
+    else:
+        dates_session_detail = dates_previsionnelles
+
+    # -----------------------------------------------------------------------
+    # Contexte Jinja2 pour docxtpl
+    # -----------------------------------------------------------------------
+    context = {
+        # --- Client ---
+        "client_nom": client.nom,
+        "client_adresse": client.adresse,
+
+        # --- Module de cette demi-journée ---
+        "module_code": module_code,
+        "module_intitule": module_intitule,
+
+        # --- Stats fixes pour 1 demi-journée ---
+        "nb_journees_str": "0,5",
+        "nb_heures_str": "3,5 heures",
+        "modalite": _modalite_display(mc.modalite),
+
+        # --- Date de session ---
+        "date_session": date_session,
+        "dates_session_detail": dates_session_detail,
+
+        # --- Stagiaires (tous, TNS inclus — présents lors des sessions) ---
+        "stagiaires": [
+            {"nom": s.nom, "prenom": s.prenom}
+            for s in group.all_stagiaires
+        ],
+
+        # --- Document ---
+        "ref_dossier": ref_dossier,
+        "num_dj": num_dj,
+    }
+
+    # -----------------------------------------------------------------------
+    # Rendu docxtpl
+    # -----------------------------------------------------------------------
+    tpl = DocxTemplate(template_path)
+    tpl.render(context)
+
+    # -----------------------------------------------------------------------
+    # Nom du fichier de sortie
+    # G{min_col:02d} garantit l'unicité même si deux groupes ont le même label
+    # -----------------------------------------------------------------------
+    client_slug = _slug(client.nom)
+    group_start = min(group.col_indexes)
+    group_slug  = _slug(group.label)
+    filename = f"PRESENCE_{client_slug}_G{group_start:02d}_{group_slug}_DJ{num_dj:02d}.docx"
+    output_path = output_dir / filename
+    tpl.save(output_path)
+
+    return output_path
+
+
+# ---------------------------------------------------------------------------
+# Renderer : génère un lot de feuilles de présence
+# ---------------------------------------------------------------------------
+
+class FeuillePresenceRenderer:
+    """
+    Gère la génération en lot des feuilles de présence pour un client.
+
+    Génère 1 feuille par demi-journée (= par module_column de chaque groupe).
+    Pour GENERFEU : 4+4+2+3+2 = 15 feuilles.
+
+    Usage :
+        renderer = FeuillePresenceRenderer()
+        paths = renderer.generate_all(groups, client, dates, output_dir)
+    """
+
+    def __init__(self, template_path: Optional[Path] = None):
+        self.template_path = template_path or (TEMPLATES_DIR / "feuille_presence.docx")
+        if not self.template_path.exists():
+            raise FileNotFoundError(
+                f"Template introuvable : {self.template_path}\n"
+                "Lancez d'abord : python scripts/build_presence_template.py"
+            )
+
+    def generate_all(
+        self,
+        groups: list[ConventionGroup],
+        client: ClientInfo,
+        dates_previsionnelles: str,
+        date_document: Optional[str] = None,
+        ref_dossier: str = "",
+        output_dir: Path = DEFAULT_PRESENCE_DIR,
+    ) -> list[Path]:
+        """
+        Génère les feuilles de présence pour tous les groupes.
+
+        Itère sur chaque module_column de chaque groupe (1 feuille par demi-journée).
+
+        Returns:
+            Liste des chemins vers les fichiers générés (ordonnés par groupe puis demi-journée).
+        """
+        paths = []
+        for group in groups:
+            for num_dj in range(1, len(group.module_columns) + 1):
+                path = generate_feuille_presence(
+                    group=group,
+                    num_dj=num_dj,
                     client=client,
                     dates_previsionnelles=dates_previsionnelles,
                     date_document=date_document,

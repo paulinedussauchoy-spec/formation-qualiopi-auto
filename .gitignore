@@ -19,6 +19,10 @@ env/
 output/
 *.zip
 
+# Fichiers clients (données sensibles — ne pas versionner)
+base de travail/
+generated/
+
 # OS
 .DS_Store
 Thumbs.db

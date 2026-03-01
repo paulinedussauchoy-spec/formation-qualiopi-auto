@@ -1,0 +1,19 @@
+{
+  "_comment": "Données fixes de l'organisme de formation eBazten — PRD §9",
+  "nom": "eBazten (éditeur de Koban)",
+  "adresse": "2495 route de Forcalquier – 04300 Pierrerue",
+  "tel": "06 69 64 80 09",
+  "email": "contact@koban-crm.com",
+  "representant": "Guillaume Lecanu",
+  "fonction": "Gérant",
+  "declaration": "82691206769",
+  "datadock": "0029644",
+  "siren": "539304683",
+  "formatrice": "Estelle Lecanu",
+  "tarif_demi_journee_ht": 450.0,
+  "tva": 0.20,
+  "dedit_montant_ht": 400.0,
+  "lieu_signature": "Pierrerue",
+  "questionnaire_chaud_url": "https://docs.google.com/forms/d/1pyD2p8OKvsyM-zOeQv2QQqEy0rprCIAs-nfM3vN6aE8/prefill",
+  "questionnaire_froid_url": "https://docs.google.com/forms/d/1N73xIjPQfW7mae6OlJaXJRn8In1lx5HFUNXL4_xJG7I/prefill"
+}

@@ -204,6 +204,19 @@ def _render_group(i: int, group: ConventionGroup) -> None:
             for m in group.modules:
                 st.markdown(f"- `{m.code}` — {m.intitule}")
 
+            st.markdown("---")
+            is_visio = group.modalite.upper().strip() == "VISIO"
+            st.number_input(
+                "Frais de mission HT (€)",
+                min_value=0.0,
+                value=0.0,
+                step=50.0,
+                format="%.2f",
+                key=_wkey("frais", i),
+                help="0 € automatique pour les formations à distance (VISIO). À renseigner pour les formations sur site.",
+                disabled=is_visio,
+            )
+
         # ── Colonne droite : stagiaires
         with col_r:
             st.write("**Stagiaires (convention) :**")
@@ -273,6 +286,10 @@ def _do_generate_conventions(
         return
 
     filtered = _get_filtered_groups(groups)
+    frais_list = [
+        float(st.session_state.get(_wkey("frais", i), 0.0))
+        for i in range(len(groups))
+    ]
 
     with st.spinner("Génération des conventions..."):
         try:
@@ -284,6 +301,7 @@ def _do_generate_conventions(
                     dates_previsionnelles=dates_prev,
                     date_document=date_doc,
                     output_dir=out,
+                    frais_per_group=frais_list,
                 )
                 zip_bytes = _build_zip({"conventions": paths}, soffice)
 
@@ -523,12 +541,6 @@ def main() -> None:
                     "69390 VOURLES"
                 ),
             )
-            frais = st.number_input(
-                "Frais de mission HT (€)",
-                min_value=0.0,
-                value=_saved.frais_mission_ht if _saved else 0.0,
-                step=50.0, format="%.2f",
-            )
 
         st.divider()
         col3, col4 = st.columns(2)
@@ -567,7 +579,6 @@ def main() -> None:
             st.session_state["client"]     = ClientInfo(
                 nom=nom, adresse=adresse,
                 representant=representant, fonction=fonction,
-                frais_mission_ht=frais,
             )
             st.session_state["dates_prev"] = dates_prev
             st.session_state["date_doc"]   = date_doc

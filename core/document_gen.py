@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as _dc_replace
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -283,18 +283,26 @@ class ConventionRenderer:
         dates_previsionnelles: str,
         date_document: Optional[str] = None,
         output_dir: Path = DEFAULT_OUTPUT_DIR,
+        frais_per_group: Optional[list[float]] = None,
     ) -> list[Path]:
         """
         Génère les conventions pour tous les groupes d'un client.
+
+        Args:
+            frais_per_group: Frais de mission HT par groupe (index = index du groupe).
+                             Si None ou index absent, utilise client.frais_mission_ht.
 
         Returns:
             Liste des chemins vers les fichiers générés (dans l'ordre des groupes).
         """
         paths = []
-        for group in groups:
+        for i, group in enumerate(groups):
+            group_client = client
+            if frais_per_group is not None and i < len(frais_per_group):
+                group_client = _dc_replace(client, frais_mission_ht=frais_per_group[i])
             path = generate_convention(
                 group=group,
-                client=client,
+                client=group_client,
                 dates_previsionnelles=dates_previsionnelles,
                 date_document=date_document,
                 output_dir=output_dir,

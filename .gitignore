@@ -23,6 +23,10 @@ output/
 base de travail/
 generated/
 
+# Documentation interne (non nécessaire au déploiement)
+prd.md
+ARCHITECTURE.md
+
 # OS
 .DS_Store
 Thumbs.db

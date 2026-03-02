@@ -213,6 +213,26 @@ def build_convention_template():
             break
 
     # ------------------------------------------------------------------
+    # PARAGRAPHES — Téléphone et email de l'organisme
+    # Le texte source "Tel : 06 69 64 80 09 – contact@koban-crm.com"
+    # est remplacé par des tags pour éviter de versionner ces données.
+    # ------------------------------------------------------------------
+    for p in doc.paragraphs:
+        if "Tel" in p.text and ("@" in p.text or any(c.isdigit() for c in p.text)):
+            new_text = p.text
+            # Remplacer le numéro de téléphone (format xx xx xx xx xx)
+            new_text = _re.sub(r"\d{2}[\s.]\d{2}[\s.]\d{2}[\s.]\d{2}[\s.]\d{2}", "{{ organisme_telephone }}", new_text)
+            # Remplacer l'adresse email
+            new_text = _re.sub(r"[\w.+-]+@[\w-]+\.[\w.]+", "{{ organisme_email }}", new_text)
+            for run in p.runs:
+                run.text = ""
+            if p.runs:
+                p.runs[0].text = new_text
+            else:
+                p.add_run(new_text)
+            break
+
+    # ------------------------------------------------------------------
     # Sauvegarde
     # ------------------------------------------------------------------
     doc.save(DEST)

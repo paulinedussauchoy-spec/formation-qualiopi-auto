@@ -128,7 +128,16 @@ def _load_organisme() -> dict:
     path = CONFIG_DIR / "organisme.json"
     with path.open(encoding="utf-8") as f:
         data = json.load(f)
-    # Supprimer les clés de commentaires
+    return {k: v for k, v in data.items() if not k.startswith("_")}
+
+
+def _load_org_settings() -> dict:
+    """Charge les paramètres sensibles depuis org_settings.json (gitignored)."""
+    path = CONFIG_DIR / "org_settings.json"
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8") as f:
+        data = json.load(f)
     return {k: v for k, v in data.items() if not k.startswith("_")}
 
 
@@ -223,6 +232,11 @@ def generate_convention(
         # --- Document ---
         "date_document": date_document,
     }
+
+    # Données sensibles chargées depuis org_settings.json (gitignored)
+    _org = _load_org_settings()
+    context["organisme_telephone"] = _org.get("tel", "")
+    context["organisme_email"]     = _org.get("email", "")
 
     # -----------------------------------------------------------------------
     # Rendu docxtpl

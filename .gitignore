@@ -23,6 +23,9 @@ output/
 base de travail/
 generated/
 
+# Paramètres sensibles de l'organisme (tel, email)
+config/org_settings.json
+
 # Documentation interne (non nécessaire au déploiement)
 prd.md
 ARCHITECTURE.md

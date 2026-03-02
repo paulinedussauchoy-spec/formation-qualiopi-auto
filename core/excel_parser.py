@@ -44,6 +44,7 @@ NON_FORMATION_GROUPS = {"Interne Koban"}
 
 # Lignes de métadonnées (1-indexé, correspondant aux lignes Excel)
 ROW_TYPE_GROUPE = 1
+ROW_CLIENT_INFO = 2   # B2=responsable, C2=statut/fonction, D2=adresse
 ROW_DOMAINE = 2
 ROW_DUREE = 3
 ROW_DATE = 4
@@ -114,6 +115,10 @@ class ExcelData:
     client_name: str
     module_columns: list[ModuleColumn]
     stagiaires: list[Stagiaire]
+    # Infos client lues depuis B2/C2/D2 (optionnelles — vides si absentes)
+    client_representant: str = ""
+    client_fonction: str = ""
+    client_adresse: str = ""
 
     def module_col_by_index(self, col_index: int) -> Optional[ModuleColumn]:
         for mc in self.module_columns:
@@ -155,6 +160,12 @@ def parse_formations_excel(file_path: str | Path) -> ExcelData:
     # Nom du client (ligne 1, col B — cellules B1:D1 fusionnées)
     client_name = str(raw.get(ROW_TYPE_GROUPE, {}).get(COL_NOM, "")).strip() or "CLIENT"
 
+    # Infos client optionnelles (ligne 2, colonnes B/C/D — format "label: valeur")
+    row2 = raw.get(ROW_CLIENT_INFO, {})
+    client_representant = _parse_labeled_cell(row2.get(COL_NOM))     # B2
+    client_fonction     = _parse_labeled_cell(row2.get(COL_PRENOM))  # C2
+    client_adresse      = _parse_labeled_cell(row2.get(COL_EMAIL))   # D2
+
     # Identification des colonnes modules (col E et suivantes avec durée = 0.5)
     module_columns = _extract_module_columns(raw, ws.max_column)
 
@@ -165,12 +176,29 @@ def parse_formations_excel(file_path: str | Path) -> ExcelData:
         client_name=client_name,
         module_columns=module_columns,
         stagiaires=stagiaires,
+        client_representant=client_representant,
+        client_fonction=client_fonction,
+        client_adresse=client_adresse,
     )
 
 
 # ---------------------------------------------------------------------------
 # Fonctions internes
 # ---------------------------------------------------------------------------
+
+def _parse_labeled_cell(value) -> str:
+    """
+    Parse une cellule au format "label: valeur" ou "label:valeur".
+    Retourne la valeur après le premier ':', nettoyée des espaces.
+    Retourne '' si la cellule est vide ou ne contient pas de ':'.
+    """
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if ":" in text:
+        return text.split(":", 1)[1].strip()
+    return ""
+
 
 def _select_worksheet(wb: openpyxl.Workbook):
     """Sélectionne l'onglet 'Formations et inscrits', sinon le premier."""

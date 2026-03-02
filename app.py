@@ -526,20 +526,16 @@ def main() -> None:
             )
             representant = st.text_input(
                 "Représentant légal *",
-                value=_saved.representant if _saved else "Gilles BERTRAND",
+                value=_saved.representant if _saved else (excel_data.client_representant or ""),
             )
             fonction     = st.text_input(
                 "Fonction *",
-                value=_saved.fonction if _saved else "Dirigeant",
+                value=_saved.fonction if _saved else (excel_data.client_fonction or ""),
             )
         with col2:
             adresse = st.text_area(
                 "Adresse complète *", height=100,
-                value=_saved.adresse if _saved else (
-                    "PARC D'ACTIVITES DES ECLAPONS\n"
-                    "3 CHEMIN DES ECLAPONS\n"
-                    "69390 VOURLES"
-                ),
+                value=_saved.adresse if _saved else (excel_data.client_adresse or ""),
             )
 
         st.divider()

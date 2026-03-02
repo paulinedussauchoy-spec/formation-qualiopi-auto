@@ -508,19 +508,20 @@ def main() -> None:
             )
             representant = st.text_input(
                 "Représentant légal *",
-                value=_saved.representant if _saved else "",
-                placeholder="Gilles BERTRAND",
+                value=_saved.representant if _saved else "Gilles BERTRAND",
             )
             fonction     = st.text_input(
                 "Fonction *",
-                value=_saved.fonction if _saved else "",
-                placeholder="Dirigeant",
+                value=_saved.fonction if _saved else "Dirigeant",
             )
         with col2:
             adresse = st.text_area(
                 "Adresse complète *", height=100,
-                value=_saved.adresse if _saved else "",
-                placeholder="PARC D'ACTIVITES DES ECLAPONS\n3 CHEMIN DES ECLAPONS\n69390 VOURLES",
+                value=_saved.adresse if _saved else (
+                    "PARC D'ACTIVITES DES ECLAPONS\n"
+                    "3 CHEMIN DES ECLAPONS\n"
+                    "69390 VOURLES"
+                ),
             )
             frais = st.number_input(
                 "Frais de mission HT (€)",
@@ -535,7 +536,7 @@ def main() -> None:
             dates_prev = st.text_input(
                 "Dates prévisionnelles *",
                 value=st.session_state.get("dates_prev", ""),
-                placeholder="Du 01/04/2026 au 31/10/2026",
+                placeholder="Ex : Du 01/04/2026 au 31/10/2026",
             )
         with col4:
             date_doc = st.text_input(

@@ -243,7 +243,7 @@ def _render_group(i: int, group: ConventionGroup) -> None:
 
         # ── Dates des sessions (feuilles de présence) ────────────────────────
         st.markdown("---")
-        st.write("**Dates des sessions (feuilles de présence) :**")
+        st.write("**Dates et horaires des sessions (feuilles de présence) :**")
         n_dj = len(group.module_columns)
         dj_cols = st.columns(min(n_dj, 4))
         for j, mc in enumerate(group.module_columns):
@@ -258,11 +258,19 @@ def _render_group(i: int, group: ConventionGroup) -> None:
                     default_date = _dt.strptime(mc.date, "%d/%m/%Y").date()
                 except Exception:
                     pass
-            dj_cols[j % 4].date_input(
+            col = dj_cols[j % 4]
+            col.date_input(
                 dj_label,
                 value=default_date,
                 format="DD/MM/YYYY",
                 key=_wkey("date_dj", i, j),
+            )
+            col.text_input(
+                f"Horaires DJ{j + 1:02d}",
+                value=mc.horaires or "",
+                placeholder="ex : 9h00-12h30",
+                key=_wkey("horaires_dj", i, j),
+                label_visibility="collapsed",
             )
 
 
@@ -323,18 +331,22 @@ def _apply_dj_dates(
     group_offset: int = 0,
 ) -> list[ConventionGroup]:
     """
-    Retourne des copies des groupes avec mc.date mis à jour
-    depuis les champs de date saisis dans l'UI (session_state).
+    Retourne des copies des groupes avec mc.date et mc.horaires mis à jour
+    depuis les champs saisis dans l'UI (session_state).
     """
     from datetime import date as _date_t
     result = []
     for i, group in enumerate(groups):
         g = deepcopy(group)
         for j, mc in enumerate(g.module_columns):
-            key = _wkey("date_dj", i + group_offset, j)
-            val = st.session_state.get(key)
-            if isinstance(val, _date_t):
-                mc.date = val.strftime("%d/%m/%Y")
+            key_d = _wkey("date_dj", i + group_offset, j)
+            val_d = st.session_state.get(key_d)
+            if isinstance(val_d, _date_t):
+                mc.date = val_d.strftime("%d/%m/%Y")
+            key_h = _wkey("horaires_dj", i + group_offset, j)
+            val_h = st.session_state.get(key_h)
+            if val_h is not None:
+                mc.horaires = val_h.strip() or None
         result.append(g)
     return result
 

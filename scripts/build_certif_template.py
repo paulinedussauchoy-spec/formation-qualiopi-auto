@@ -136,6 +136,8 @@ def build_certif_template():
     # Ligne 4 : label → "Dates de réalisation", valeur → dates effectives
     _set_cell(t3.rows[4].cells[0], "Dates de r\u00e9alisation")
     _set_cell(t3.rows[4].cells[1], "{{ dates_realisees }}")
+    # Ligne 5 (nouvelle) : horaires des sessions
+    _clone_row_with_texts(t3, source_row_idx=4, texts=["Horaires des sessions", "{{ horaires_sessions }}"])
 
     # ------------------------------------------------------------------
     # PARAGRAPHES

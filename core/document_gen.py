@@ -356,6 +356,12 @@ def generate_certificat(
     # Contexte Jinja2 pour docxtpl
     # -----------------------------------------------------------------------
     nb_journees = group.nb_journees
+
+    # Horaires des sessions (dédupliqués, ordre de première apparition)
+    horaires_list = [mc.horaires for mc in group.module_columns if mc.horaires]
+    horaires_uniques = list(dict.fromkeys(horaires_list))
+    horaires_sessions = ", ".join(horaires_uniques) if horaires_uniques else "À définir"
+
     context = {
         # --- Stagiaire ---
         "stagiaire_nom": stagiaire.nom,
@@ -386,6 +392,7 @@ def generate_certificat(
         # dates_realisees = dates effectives saisies dans l'UI,
         # ou fallback sur la plage prévisionnelle
         "dates_realisees": dates_realisees if dates_realisees else dates_previsionnelles,
+        "horaires_sessions": horaires_sessions,
 
         # --- Document ---
         "date_document": date_document,

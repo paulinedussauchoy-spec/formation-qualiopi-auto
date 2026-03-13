@@ -495,14 +495,15 @@ def main() -> None:
             with st.spinner("Analyse du fichier Excel..."):
                 excel_data = parse_formations_excel(tmp_path)
                 mapper     = ModuleMapper()
-                groups     = build_convention_groups(excel_data, mapper)
+                groups, mapping_warnings = build_convention_groups(excel_data, mapper)
         except Exception as exc:
             st.error(f"Impossible de lire le fichier : {exc}")
             return
 
-        st.session_state["upload_name"] = uploaded.name
-        st.session_state["excel_data"]  = excel_data
-        st.session_state["groups"]      = groups
+        st.session_state["upload_name"]      = uploaded.name
+        st.session_state["excel_data"]       = excel_data
+        st.session_state["groups"]           = groups
+        st.session_state["mapping_warnings"] = mapping_warnings
 
     groups: list[ConventionGroup] = st.session_state.get("groups", [])
     excel_data = st.session_state.get("excel_data")
@@ -510,6 +511,12 @@ def main() -> None:
     if not groups:
         st.warning("Aucun groupe de formation détecté dans ce fichier.")
         return
+
+    mapping_warnings: list[str] = st.session_state.get("mapping_warnings", [])
+    if mapping_warnings:
+        with st.expander(f"⚠️ {len(mapping_warnings)} module(s) non reconnu(s) dans l'Excel — cliquez pour voir", expanded=True):
+            for w in mapping_warnings:
+                st.warning(w)
 
     nb_stag  = sum(len(g.all_stagiaires) for g in groups)
     nb_conv  = len(groups)

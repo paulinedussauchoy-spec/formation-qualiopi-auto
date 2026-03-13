@@ -182,13 +182,28 @@
     },
     {
       "type_groupe": "Administrateurs",
-      "domaines": ["SAV", "SAV +++"],
+      "domaines": ["SAV", "SAV +++", "Serviceclients", "Service clients"],
       "code": "1-09"
     },
     {
       "type_groupe": "Administrateurs",
       "domaines": ["Facturation clients / CONTRATS", "Facturation clients", "Facturation"],
       "code": "1-05"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["Contrats"],
+      "code": "2-05"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["Projets"],
+      "code": "2-11"
+    },
+    {
+      "type_groupe": "Administrateurs",
+      "domaines": ["Marketing Emailing", "Marketing\nEmailing", "Marketing emailing"],
+      "code": "1-07"
     },
     {
       "type_groupe": "Utilisateurs",
@@ -202,12 +217,12 @@
     },
     {
       "type_groupe": "Utilisateurs",
-      "domaines": ["SAV", "SAV +++"],
+      "domaines": ["SAV", "SAV +++", "Service clients", "Serviceclients"],
       "code": "1-10"
     },
     {
       "type_groupe": "Utilisateurs",
-      "domaines": ["Facturation clients / CONTRATS", "Facturation clients", "Facturation"],
+      "domaines": ["Facturation clients / CONTRATS", "Facturation clients", "Facturation", "Contrats"],
       "code": "2-06"
     }
   ]

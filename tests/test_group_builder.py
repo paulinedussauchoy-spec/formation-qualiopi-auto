@@ -31,7 +31,8 @@ MAPPER = ModuleMapper()
 
 def _load_groups() -> list[ConventionGroup]:
     data = parse_formations_excel(EXCEL_PATH)
-    return build_convention_groups(data, MAPPER)
+    groups, _ = build_convention_groups(data, MAPPER)
+    return groups
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +58,7 @@ def test_groups_sorted_by_first_col():
 def test_all_39_stagiaires_covered():
     """Chaque stagiaire doit appartenir à exactement un groupe."""
     data = parse_formations_excel(EXCEL_PATH)
-    groups = build_convention_groups(data, MAPPER)
+    groups, _ = build_convention_groups(data, MAPPER)
     all_in_groups = [s for g in groups for s in g.all_stagiaires]
     assert len(all_in_groups) == 39, (
         f"Attendu 39 stagiaires répartis, obtenu {len(all_in_groups)}"

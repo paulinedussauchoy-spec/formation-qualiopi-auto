@@ -41,7 +41,7 @@ DATE_DOC = "01/03/2026"
 def _load():
     data = parse_formations_excel(EXCEL_PATH)
     mapper = ModuleMapper()
-    groups = build_convention_groups(data, mapper)
+    groups, _ = build_convention_groups(data, mapper)
     renderer = ConventionRenderer()
     return groups, renderer
 

@@ -169,7 +169,7 @@ def _col_code(mc: ModuleColumn) -> str:
 def build_convention_groups(
     data: ExcelData,
     mapper: ModuleMapper,
-) -> list[ConventionGroup]:
+) -> tuple[list[ConventionGroup], list[str]]:
     """
     Regroupe les stagiaires en conventions à partir du résultat du parser Excel.
 
@@ -178,9 +178,12 @@ def build_convention_groups(
         mapper: Instance de ModuleMapper chargée
 
     Returns:
-        Liste de ConventionGroup triée par premier col_index (ordre Excel).
-        Chaque groupe correspond à une convention à générer.
+        Tuple (groupes, warnings) :
+        - Liste de ConventionGroup triée par premier col_index (ordre Excel).
+        - Liste de messages d'avertissement pour les modules non résolus.
     """
+    mapping_warnings: list[str] = []
+
     # --- Étape 1 : Calculer la clé de groupement pour chaque stagiaire ---
     # Clé = frozenset des colonnes où mark ∈ {x, optionnel, TNS}
     GROUPING_MARKS = {MARK_CONFIRMED, MARK_OPTIONAL, MARK_TNS}
@@ -213,7 +216,11 @@ def build_convention_groups(
         unique_modules: list[Module] = []
         for mc in module_cols:
             module = mapper.resolve(mc.type_groupe, mc.domaine)
-            if module is not None and module.code not in seen_codes:
+            if module is None:
+                warn = f"Module non reconnu : type='{mc.type_groupe}', domaine='{mc.domaine}' (colonne {mc.col_index})"
+                if warn not in mapping_warnings:
+                    mapping_warnings.append(warn)
+            elif module.code not in seen_codes:
                 seen_codes.add(module.code)
                 unique_modules.append(module)
 
@@ -244,8 +251,8 @@ def build_convention_groups(
         # Modalité (doit être cohérente dans le groupe — on prend la première)
         modalite = module_cols[0].modalite if module_cols else ""
 
-        # nb_demi_journees = nb colonnes Excel = nb demi-journées réelles (modifiable par Estelle)
-        nb_demi_journees = len(module_cols)
+        # nb_demi_journees = nb modules uniques = valeur par défaut (modifiable par Estelle dans l'UI)
+        nb_demi_journees = len(unique_modules)
 
         # Label suggéré
         label = _suggest_label(module_cols, unique_modules)
@@ -266,7 +273,7 @@ def build_convention_groups(
 
     # Tri par premier col_index → ordre cohérent avec l'Excel
     result.sort(key=lambda g: min(g.col_indexes))
-    return result
+    return result, mapping_warnings
 
 
 # ---------------------------------------------------------------------------
